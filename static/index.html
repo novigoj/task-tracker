@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #2d3748;
+            margin-bottom: 8px;
+            font-size: 32px;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #f7fafc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #48bb78;
+        }
+
+        .status-dot.error {
+            background: #f56565;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #2d3748;
+            margin-bottom: 16px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            color: #4a5568;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #718096;
+        }
+
+        .btn-danger {
+            background: #f56565;
+        }
+
+        .task-list {
+            margin-top: 16px;
+        }
+
+        .task-item {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 12px;
+            align-items: start;
+            transition: all 0.2s;
+        }
+
+        .task-item:hover {
+            background: #edf2f7;
+        }
+
+        .task-item.done {
+            opacity: 0.6;
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title {
+            font-weight: 500;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .task-item.done .task-title {
+            text-decoration: line-through;
+        }
+
+        .task-meta {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: #e2e8f0;
+            color: #4a5568;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: #718096;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 16px;
+        }
+
+        .edit-mode {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .edit-mode input {
+            flex: 1;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #2d3748;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transform: translateY(100px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            background: #48bb78;
+        }
+
+        .toast.error {
+            background: #f56565;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .stat-card {
+            background: #f7fafc;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Task Tracker</h1>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-dot" id="healthDot"></span>
+                    <span>Backend: <span id="healthStatus">Проверка...</span></span>
+                </div>
+                <div class="status-item">
+                    <span>Версия: <span id="versionText">-</span></span>
+                </div>
+            </div>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalCount">0</div>
+                    <div class="stat-label">Всего задач</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="doneCount">0</div>
+                    <div class="stat-label">Выполнено</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="todoCount">0</div>
+                    <div class="stat-label">В работе</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>➕ Создать задачу</h2>
+                <form id="createForm">
+                    <div class="form-group">
+                        <label for="userId">User ID</label>
+                        <input type="number" id="userId" value="3" required min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskTitle">Название задачи</label>
+                        <input type="text" id="taskTitle" placeholder="Купить молоко" required>
+                    </div>
+                    <button type="submit">Создать задачу</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>🔍 Фильтры и пагинация</h2>
+                <div class="form-group">
+                    <label>Статус</label>
+                    <div class="filters">
+                        <div class="filter-btn active" data-filter="all">Все</div>
+                        <div class="filter-btn" data-filter="false">Активные</div>
+                        <div class="filter-btn" data-filter="true">Выполненные</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="limitSelect">Показать на странице</label>
+                    <select id="limitSelect">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+                <button onclick="loadTasks()">Обновить список</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Список задач</h2>
+            <div id="taskList" class="task-list">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🔄</div>
+                    <div>Загрузка...</div>
+                </div>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const API_BASE = 'https://upgraded-couscous-jxw4wgr4qv7cpjxw-8080.app.github.dev/api';
+        let currentFilter = 'all';
+        let currentPage = 0;
+        let currentLimit = 10;
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            checkHealth();
+            loadVersion();
+            loadTasks();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('createForm').addEventListener('submit', createTask);
+            document.getElementById('limitSelect').addEventListener('change', (e) => {
+                currentLimit = parseInt(e.target.value);
+                currentPage = 0;
+                loadTasks();
+            });
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentFilter = e.target.dataset.filter;
+                    currentPage = 0;
+                    loadTasks();
+                });
+            });
+        }
+
+        async function checkHealth() {
+            try {
+                const res = await fetch(`${API_BASE}/health`);
+                const data = await res.json();
+                document.getElementById('healthStatus').textContent = data.status === 'ok' ? 'OK' : 'Error';
+                document.getElementById('healthDot').className = data.status === 'ok' ? 'status-dot' : 'status-dot error';
+            } catch (err) {
+                document.getElementById('healthStatus').textContent = 'Offline';
+                document.getElementById('healthDot').className = 'status-dot error';
+            }
+        }
+
+        async function loadVersion() {
+            try {
+                const res = await fetch(`${API_BASE}/version`);
+                const data = await res.json();
+                document.getElementById('versionText').textContent = data.version;
+            } catch (err) {
+                console.error('Failed to load version:', err);
+            }
+        }
+
+        async function loadTasks() {
+            const offset = currentPage * currentLimit;
+            let url = `${API_BASE}/tasks?limit=${currentLimit}&offset=${offset}`;
+            
+            if (currentFilter !== 'all') {
+                url += `&done=${currentFilter}`;
+            }
+
+            try {
+                const res = await fetch(url);
+                const tasks = await res.json();
+                displayTasks(tasks);
+                updateStats();
+            } catch (err) {
+                showToast('Ошибка загрузки задач', 'error');
+                console.error(err);
+            }
+        }
+
+        function displayTasks(tasks) {
+            const container = document.getElementById('taskList');
+            
+            if (!tasks || tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <div>Задач нет</div>
+                    </div>
+                `;
+                updatePagination(false);
+                return;
+            }
+
+            container.innerHTML = tasks.map(task => `
+                <div class="task-item ${task.done ? 'done' : ''}" data-id="${task.id}">
+                    <input type="checkbox" 
+                           class="task-checkbox" 
+                           ${task.done ? 'checked' : ''} 
+                           onchange="toggleTask(${task.id}, this.checked)">
+                    <div class="task-content">
+                        <div class="task-title" id="title-${task.id}">${escapeHtml(task.title)}</div>
+                        <div class="task-meta">
+                            ID: ${task.id} | User: ${task.user_id} | 
+                            Создано: ${new Date(task.created_at).toLocaleString('ru-RU')}
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="btn-small btn-secondary" onclick="editTask(${task.id})">✏️</button>
+                        <button class="btn-small btn-danger" onclick="deleteTask(${task.id})">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+
+            updatePagination(tasks.length === currentLimit);
+        }
+
+        function updatePagination(hasMore) {
+            const container = document.getElementById('pagination');
+            
+            let html = '';
+            if (currentPage > 0) {
+                html += `<button class="btn-small" onclick="changePage(-1)">← Назад</button>`;
+            }
+            
+            html += `<span style="padding: 8px;">Страница ${currentPage + 1}</span>`;
+            
+            if (hasMore) {
+                html += `<button class="btn-small" onclick="changePage(1)">Вперед →</button>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function changePage(delta) {
+            currentPage = Math.max(0, currentPage + delta);
+            loadTasks();
+        }
+
+        async function createTask(e) {
+            e.preventDefault();
+            
+            const userId = parseInt(document.getElementById('userId').value);
+            const title = document.getElementById('taskTitle').value.trim();
+
+            if (!title) {
+                showToast('Введите название задачи', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/tasks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, title })
+                });
+
+                if (res.ok) {
+                    showToast('Задача создана!', 'success');
+                    document.getElementById('taskTitle').value = '';
+                    loadTasks();
+                } else {
+                    const err = await res.json();
+                    showToast(err.error || 'Ошибка создания', 'error');
+                }
+            } catch (err) {
+                showToast('Ошибка сети', 'error');
+                console.error(err);
+            }
+        }
+
+        async function toggleTask(id, done) {
+            try {
+                const res = await fetch(`${API_BASE}/tasks/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ done })
+                });
+
+                if (res.ok) {
+                    showToast(done ? 'Задача выполнена ✓' : 'Задача возвращена в работу', 'success');
+                    loadTasks();
+                } else {
+                    showToast('Ошибка обновления', 'error');
+                    loadTasks();
+                }
+            } catch (err) {
+                showToast('Ошибка сети', 'error');
+                loadTasks();
+            }
+        }
+
+        function editTask(id) {
+            const titleEl = document.getElementById(`title-${id}`);
+            const currentTitle = titleEl.textContent;
+            
+            titleEl.parentElement.innerHTML = `
+                <div class="edit-mode">
+                    <input type="text" id="edit-input-${id}" value="${escapeHtml(currentTitle)}" autofocus>
+                    <button class="btn-small" onclick="saveEdit(${id})">✓</button>
+                    <button class="btn-small btn-secondary" onclick="loadTasks()">✗</button>
+                </div>
+            `;
+            
+            document.getElementById(`edit-input-${id}`).focus();
+        }
+
+        async function saveEdit(id) {
+            const newTitle = document.getElementById(`edit-input-${id}`).value.trim();
+            
+            if (!newTitle) {
+                showToast('Название не может быть пустым', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/tasks/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: newTitle })
+                });
+
+                if (res.ok) {
+                    showToast('Задача обновлена!', 'success');
+                    loadTasks();
+                } else {
+                    const err = await res.json();
+                    showToast(err.error || 'Ошибка обновления', 'error');
+                }
+            } catch (err) {
+                showToast('Ошибка сети', 'error');
+            }
+        }
+
+        async function deleteTask(id) {
+            if (!confirm('Удалить задачу?')) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/tasks/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (res.ok) {
+                    showToast('Задача удалена', 'success');
+                    loadTasks();
+                } else {
+                    showToast('Ошибка удаления', 'error');
+                }
+            } catch (err) {
+                showToast('Ошибка сети', 'error');
+            }
+        }
+
+        async function updateStats() {
+            try {
+                const [allRes, doneRes, todoRes] = await Promise.all([
+                    fetch(`${API_BASE}/tasks?limit=10`),
+                    fetch(`${API_BASE}/tasks?done=true&limit=10`),
+                    fetch(`${API_BASE}/tasks?done=false&limit=10`)
+                ]);
+
+                const all = await allRes.json();
+                const done = await doneRes.json();
+                const todo = await todoRes.json();
+
+                document.getElementById('totalCount').textContent = all.length;
+                document.getElementById('doneCount').textContent = done.length;
+                document.getElementById('todoCount').textContent = todo.length;
+            } catch (err) {
+                console.error('Failed to update stats:', err);
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Auto-refresh health every 30 seconds
+        setInterval(checkHealth, 30000);
+    </script>
+</body>
+</html>

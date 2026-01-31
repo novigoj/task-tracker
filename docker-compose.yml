@@ -1,0 +1,39 @@
+services: # сервисы compose
+  db: # Postgres
+    image: postgres:16-alpine # образ БД
+    environment: # init параметры
+      POSTGRES_USER: postgres # юзер
+      POSTGRES_PASSWORD: postgres # пароль
+      POSTGRES_DB: task_tracker # база
+    volumes:
+      - pgdata:/var/lib/postgresql/data # данные БД
+    ports:
+      - "5432:5432" # проброс порта
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d task_tracker"] # готовность БД
+      interval: 5s # период
+      timeout: 3s # таймаут
+      retries: 10 # попытки
+
+  app: # Go приложение
+    image: golang:1.25-alpine # рантайм/сборка
+    working_dir: /app # рабочая папка
+    volumes:
+      - ./:/app # код внутрь
+      - gomod:/go/pkg/mod # кеш модулей
+      - gocache:/root/.cache/go-build # кеш сборки
+    environment:
+      PORT: "8080" # порт сервера
+      DATABASE_URL: "postgres://postgres:postgres@db:5432/task_tracker?sslmode=disable" # DSN
+      GOTOOLCHAIN: "auto" # авто toolchain
+    command: sh -c "go mod download && go run ./cmd/server" # скачать модули + старт
+    ports:
+      - "8080:8080" # проброс порта
+    depends_on:
+      db:
+        condition: service_healthy # ждать health db
+
+volumes: # именованные тома
+  pgdata: # данные Postgres
+  gomod: # кеш модулей
+  gocache: # кеш сборки
